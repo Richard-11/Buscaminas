@@ -110,9 +110,14 @@ CONE = u'\u2534'  # ┴
 CSOM = u'\u2593'  # ▒
 
 
-def jugar(filas, columnas, minas):
-    tablero = crear_tablero(filas, columnas, minas)
-    imprimir_tablero(tablero)
+def jugar(filas, columnas, minas, leer_fichero = False):
+    if leer_fichero:
+        tablero = leer_tablero()
+    else:
+        tablero = crear_tablero(filas, columnas, minas)
+
+    if tablero:
+        imprimir_tablero(tablero)
 
 
 def crear_tablero(filas, columnas, minas):
@@ -141,7 +146,7 @@ def crear_tablero(filas, columnas, minas):
 
         if not tablero[i][j].hay_mina():
             tablero[i][j].poner_mina()
-            minas = minas - 1
+            minas -= 1
 
     return tablero
 
@@ -197,8 +202,44 @@ def imprimir_tablero(tablero):
                 print "  " + CNE + COE*3 + (CONE + COE*3)*(len(tablero[0]) - 1) + CON
 
 
-def leer_fichero():
-    return None, None, None
+def leer_tablero():
+    """
+    Devuelve un tablero creado a partir de la lectura de un fichero.
+
+    :return: tablero implementado según el contenido del fichero
+    """
+    nombre_fichero = raw_input("Introduce el nombre del fichero: ")
+    tablero = []
+    try:
+        fich = open(nombre_fichero, "r")
+
+        lineas_ficheros = fich.readlines()
+
+        fich.close()
+
+        filas, columnas = lineas_ficheros[0].split()
+
+        if lineas_ficheros:
+            lineas_ficheros.pop(0)
+
+            for i in range(int(filas)):
+                componentes_filas = []
+                for j in range(int(columnas)):
+                    celda = Celda(i, j)
+                    if lineas_ficheros[i][j] == "*":
+                        celda.poner_mina()
+                        componentes_filas.append(celda)
+                    elif lineas_ficheros[i][j] == ".":
+                        componentes_filas.append(celda)
+
+            tablero.append(componentes_filas)
+
+    except IOError:
+        print 'No se ha encontrado ningún fichero con el nombre "' + nombre_fichero + '".'
+    except:
+        print "El fichero no cumple con el formato para la definición del tablero."
+
+    return tablero
 
 
 # main
@@ -220,8 +261,7 @@ while True:
     elif modo == 3:
         jugar(16, 30, 99)
     elif modo == 4:
-        filas, columnas, minas = leer_fichero()
-        jugar(filas, columnas, minas)
+        jugar(None, None, None, True)
     elif modo == 5:
         print "¡Hasta la próxima!"
         break
