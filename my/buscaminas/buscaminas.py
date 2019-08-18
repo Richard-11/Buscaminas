@@ -119,6 +119,12 @@ def jugar(filas, columnas, minas, leer_fichero = False):
     if tablero:
         imprimir_tablero(tablero)
 
+        jugada = raw_input("Introduzca una jugada: ")
+
+        hacer_jugada(jugada)
+
+
+
 
 def crear_tablero(filas, columnas, minas):
     """
@@ -219,28 +225,30 @@ def leer_tablero():
 
         filas, columnas = lineas_ficheros[0].split()
 
-        if lineas_ficheros:
-            lineas_ficheros.pop(0)
+        lineas_ficheros.pop(0)
 
-            for i in range(int(filas)):
-                componentes_filas = []
-                for j in range(int(columnas)):
-                    celda = Celda(i, j)
-                    if lineas_ficheros[i][j] == "*":
-                        celda.poner_mina()
-                        componentes_filas.append(celda)
-                    elif lineas_ficheros[i][j] == ".":
-                        componentes_filas.append(celda)
+        for i in range(int(filas)):
+            componentes_filas = []
+            for j in range(int(columnas)):
+                celda = Celda(i, j)
+                if lineas_ficheros[i][j] == "*":
+                    celda.poner_mina()
+                    componentes_filas.append(celda)
+                elif lineas_ficheros[i][j] == ".":
+                    componentes_filas.append(celda)
 
             tablero.append(componentes_filas)
 
     except IOError:
         print 'No se ha encontrado ningún fichero con el nombre "' + nombre_fichero + '".'
     except:
-        print "El fichero no cumple con el formato para la definición del tablero."
+        print "El fichero no cumple con el formato adecuado para la definición del tablero."
 
     return tablero
 
+
+def hacer_jugada(jugada):
+    pass
 
 # main
 while True:
@@ -252,7 +260,13 @@ while True:
     print " 4. Leer de fichero"
     print " 5. Salir"
 
-    modo = int(raw_input("\nEscoja opción: "))
+    while True:
+        try:
+            modo = int(raw_input("\nEscoja opción: "))
+            print
+            break
+        except ValueError:
+            print "Por favor, introduzca una opción válida."
 
     if modo == 1:
         jugar(9, 9, 10)
