@@ -34,6 +34,13 @@ class Celda():
         return self.__hay_mina
 
     def poner_mina(self):
+        """
+        Establece que en la Celda hay una mina. Se lanza una excepción en caso de que se quiera poner una mina en una
+        Celda que ya tenga mina.
+        """
+        if self.__hay_mina:
+            raise ValueError("Esta celda ya tiene una mina.")
+
         self.__hay_mina = True
 
     def get_fila(self):

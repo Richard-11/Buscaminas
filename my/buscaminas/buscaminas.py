@@ -88,23 +88,31 @@ Una partida termina cuando:
 from celda import Celda
 import random
 
+# Caracteres para el nombre de las filas y las columnas
+NOMBRE_FILAS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ@#$%&"
+NOMBRE_COLUMNAS = "abcdefghijklmnopqrstuvwxyz=+-:/"
+
+# Asociación de caracteres y enteros
+DIC_FILAS = dict(zip(NOMBRE_FILAS, range(len(NOMBRE_FILAS))))
+DIC_COLUMNAS = dict(zip(NOMBRE_COLUMNAS, range(len(NOMBRE_COLUMNAS))))
+
 # Caracteres para dibujar cuadros
-COE = u'\u2500' # ─
-CNS = u'\u2502' # │
-CES = u'\u250C' # ┌
-CSO = u'\u2510' # ┐
-CNE = u'\u2514' # └
-CON = u'\u2518' # ┘
-COES = u'\u252C' # ┬
-CNES = u'\u251C' # ├
-CONS = u'\u2524' # ┤
-CONE = u'\u2534' # ┴
-CSOM = u'\u2593' # ▒
+COE = u'\u2500'  # ─
+CNS = u'\u2502'  # │
+CES = u'\u250C'  # ┌
+CSO = u'\u2510'  # ┐
+CNE = u'\u2514'  # └
+CON = u'\u2518'  # ┘
+COES = u'\u252C'  # ┬
+CNES = u'\u251C'  # ├
+CONS = u'\u2524'  # ┤
+CONE = u'\u2534'  # ┴
+CSOM = u'\u2593'  # ▒
 
 
 def jugar(filas, columnas, minas):
     tablero = crear_tablero(filas, columnas, minas)
-    imprimir_matriz_celdas(tablero)
+    imprimir_tablero(tablero)
 
 
 def crear_tablero(filas, columnas, minas):
@@ -138,33 +146,62 @@ def crear_tablero(filas, columnas, minas):
     return tablero
 
 
+def imprimir_tablero(tablero):
+    """
+    Imprime el tablero que se pasa como parámetro.
+
+    :param tablero: tablero a imprimir
+    """
+    print "    ",
+
+    for i in range(len(tablero[0])):
+        print NOMBRE_COLUMNAS[i], " ",
+    print
+
+    # Primer bloque de caracteres unicode
+    print "   ", CES + COE*3 + (COES + COE*3)*(len(tablero[0]) - 1) + CSO
+
+    # Bloque de caracteres unicode del interior
+    for i in range(len(tablero)):
+        if i % 2 == 0:
+            tab = "  "
+        else:
+            tab = ""
+
+        print NOMBRE_FILAS[i] + tab,
+
+        for j in range(len(tablero[0])):
+            if j == 0:
+                print CNS,
+            print CSOM + " " + CNS,
+
+            if j == len(tablero[0]) - 1:
+                print
+
+        if i % 2 == 0:
+            if i != len(tablero) - 1:
+                print "  " + CES + COE + CONE + COE + COES + \
+                      (COE + CONE + COE + COES)*(len(tablero[0]) - 1) + \
+                      COE + CON
+        else:
+            if i != len(tablero) - 1:
+                print "  " + CNE + COE + COES + COE + CONE + \
+                      (COE + COES + COE + CONE)*(len(tablero[0]) - 1) +\
+                      COE + CSO
+
+        # Último bloque de caracteres unicode
+        if i == len(tablero) - 1:
+            if i % 2 == 0:
+                print "    " + CNE + COE*3 + (CONE + COE*3)*(len(tablero[0]) - 1) + CON
+            else:
+                print "  " + CNE + COE*3 + (CONE + COE*3)*(len(tablero[0]) - 1) + CON
+
+
 def leer_fichero():
     return None, None, None
 
 
-# Metodo de comprobación, borrar más adelante
-def imprimir_matriz_celdas(tablero):
-    print len(tablero)
-    print len(tablero[0])
-    print cuenta_minas(tablero)
-    for i in range(len(tablero)):
-        for j in range(len(tablero[0])):
-            print tablero[i][j], ' ',
-            # print "(", i, ",", j, ")",
-        print
-
-
-# Metodo para borrar
-def cuenta_minas(tablero):
-    cont = 0
-    for i in range(len(tablero)):
-        for j in range(len(tablero[0])):
-            if tablero[i][j] == 1:
-                cont = cont + 1
-
-    return cont
-
-
+# main
 while True:
     print "BUSCAMINAS"
     print "----------"
