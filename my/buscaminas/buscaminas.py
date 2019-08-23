@@ -20,6 +20,31 @@ abiertas, sobre el número de minas existentes en las celdas cerradas que la rod
 número de minas por descubrir – descontando las ya marcadas – en las celdas vecinas).
 
 
+ESTADO DE LAS CELDAS:
+
+El estado de cada celda en un momento dado de la partida depende de 3 valores de tipo lógico: Si la
+celda está abierta o cerrada, si ha sido marcada o no y si contiene o no una mina.
+
+Al comienzo de la partida todas las celdas están cerradas y sin marcar, y contienen o no minas
+dependiendo de la forma en que se ha inicializado el tablero (al azar o mediante lectura de fichero).
+
+El carácter que se muestra en pantalla para cada celda viene dado por las siguientes reglas, donde se
+define n = número de celdas vecinas con mina – número de celdas vecinas marcadas (es decir, el
+número estimado de minas por descubrir en celdas vecinas):
+
+En situación normal (ninguna celda abierta contiene mina, todas las celdas marcadas están cerradas):
+    - '▓' si está cerrada y no marcada (celda sombreada)
+    - 'X' si está cerrada y marcada
+    - ' ' si está abierta y n = 0
+    - '?' si está abierta y n < 0 (se han marcado un número excesivo de celdas vecinas)
+    - El dígito que indica n si está abierta y n > 0
+
+Al revelar el tablero (ya sea por explosión de mina o por finalización correcta) todas las celdas pasan
+a estado abierto, y se pueden dar los siguientes estados adicionales:
+    - '#' si está abierta, marcada, y no contiene mina (marcado erróneo)
+    - '*' si está abierta, no marcada, y contiene mina (ausencia de marcado)
+
+
 FORMATO DE LOS FICHEROS DE DEFINICIÓN DE TABLEROS:
 
 Son ficheros de texto que constan de una primera línea donde se indica el número de filas y columnas
@@ -83,14 +108,16 @@ Una partida termina cuando:
     En ambos caso se muestra el tablero con todas las celdas abiertas, el mensaje descrito, y se pasa al
     menú de inicio de partida.
 
+
+Autor: Richard Albán Fernández
 """
 
-from celda import Celda
 import random
+from celda import Celda
 
 # Caracteres para el nombre de las filas y las columnas
-NOMBRE_FILAS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ@#$%&"
-NOMBRE_COLUMNAS = "abcdefghijklmnopqrstuvwxyz=+-:/"
+NOMBRE_FILAS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ@#$%&"  # type: str
+NOMBRE_COLUMNAS = "abcdefghijklmnopqrstuvwxyz=+-:/"  # type: str
 
 # Asociación de caracteres y enteros
 DIC_FILAS = dict(zip(NOMBRE_FILAS, range(len(NOMBRE_FILAS))))
@@ -111,6 +138,8 @@ CSOM = u'\u2593'  # ▒
 
 
 def jugar(filas, columnas, minas, leer_fichero = False):
+    jugada_valida = True
+
     if leer_fichero:
         tablero = leer_tablero()
     else:
@@ -119,9 +148,23 @@ def jugar(filas, columnas, minas, leer_fichero = False):
     if tablero:
         imprimir_tablero(tablero)
 
-        jugada = raw_input("Introduzca una jugada: ")
+        while True:
+            jugada = raw_input("Indique celda y acción (! marcar, * abrir): ")
 
-        hacer_jugada(jugada)
+            # Se dividen las jugadas en una lista, en la que cada elemento es una jugada distinta
+            jugada = dividir_en_subjugadas(jugada)
+
+            for i in range(len(jugada)):
+                jugada_valida = validar_jugada(jugada[i], tablero, minas)
+
+                if jugada_valida:
+                    pass
+                else:
+                    break
+
+
+
+
 
 
 
@@ -207,6 +250,8 @@ def imprimir_tablero(tablero):
             else:
                 print "  " + CNE + COE*3 + (CONE + COE*3)*(len(tablero[0]) - 1) + CON
 
+    print
+
 
 def leer_tablero():
     """
@@ -246,6 +291,75 @@ def leer_tablero():
 
     return tablero
 
+def dividir_en_subjugadas(jugada):
+    """
+    Devuelve la lista resultante de dividir la cadena jugada que se pasa como parámetro, en bloques de jugadas
+    independientes.
+
+    :return: lista de jugadas
+    """
+
+    lista_jugadas = []
+    cadena_jugada = ""
+
+    # Dividimos las cadena jugada en bloques de 3 caracteres
+    for i in range(len(jugada)):
+        cadena_jugada += jugada[i]
+
+        if len(cadena_jugada) == 3:
+            lista_jugadas.append(cadena_jugada)
+            cadena_jugada = ""
+
+    jugada = list(jugada)
+
+    # Borramos de la lista jugada todos los bloques de 3 caracteres que ya se han añadido a lista_jugadas
+    for i in range(len(lista_jugadas)):
+        jugada.pop(0)
+        jugada.pop(0)
+        jugada.pop(0)
+
+    # En caso de que sigan existiendo elementos en la lista jugada, se añaden a la lista lista_jugdas
+    if jugada:
+        lista_jugadas.append("".join(jugada))
+
+    return lista_jugadas
+
+def validar_jugada(jugada, tablero, minas):
+    """
+    Determina si una jugada es válida o no, teniendo en cuenta las condiciones del enunciado.
+
+    :param jugada: jugada a validar
+    :param tablero: tablero en el que se comprobará si la jugada es válida
+    :param minas: minas que tiene el tablero
+    :return: True si la jugada es válida y False en caso de que no lo sea
+    """
+    if len(jugada) < 3 or jugada[0] not in NOMBRE_FILAS[:len(tablero)] or jugada[1] not in NOMBRE_COLUMNAS[:len(tablero[0])] or jugada[2] not in "!*":
+        print "ENTRADA ERRONEA"
+        return False
+
+    fila = DIC_FILAS.get(jugada[0])
+    columna = DIC_COLUMNAS.get(jugada[1])
+    accion = jugada[2]
+
+    if accion == "!":
+        if Celda.get_celdas_marcadas() + 1 > minas:
+            print "NO SE PUEDEN MARCAR MAS CELDAS QUE MINAS"
+            return False
+
+        if tablero[fila][columna].is_abierta():
+            print "NO SE PUEDE MARCAR UNA CELDA ABIERTA"
+            return False
+
+    if accion == "*":
+        if tablero[fila][columna].is_marcada():
+            print "NO SE PUEDE ABRIR UNA CELDA MARCADA"
+            return False
+
+        if tablero[fila][columna].is_abierta() and tablero[fila][columna].get_minas_por_descubrir() > 0:
+            print "CELDA YA ABIERTA. NO SE PUEDEN ABRIR LAS CELDAS VECINAS POR NUMERO INSUFICIENTE DE MARCAS"
+            return False
+
+    return True
 
 def hacer_jugada(jugada):
     pass
