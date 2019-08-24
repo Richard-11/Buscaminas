@@ -115,6 +115,9 @@ Autor: Richard Albán Fernández
 import random
 from celda import Celda
 
+# Caracteres asociados a las acciones (! marcar, * abrir)
+ACCIONES = "!*"
+
 # Caracteres para el nombre de las filas y las columnas
 NOMBRE_FILAS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ@#$%&"  # type: str
 NOMBRE_COLUMNAS = "abcdefghijklmnopqrstuvwxyz=+-:/"  # type: str
@@ -144,6 +147,8 @@ def jugar(filas, columnas, minas, leer_fichero = False):
         tablero = leer_tablero()
     else:
         tablero = crear_tablero(filas, columnas, minas)
+
+    calcular_minas_por_descubrir(tablero)
 
     if tablero:
         imprimir_tablero(tablero)
@@ -199,6 +204,242 @@ def crear_tablero(filas, columnas, minas):
 
     return tablero
 
+def calcular_minas_por_descubrir(tablero):
+    celdas_vecinas_con_mina = 0
+    celdas_vecinas_marcadas = 0
+
+    for i in range(len(tablero)):
+        for j in range(len(tablero[0])):
+
+            # Parte superior
+            if i == 0:
+                if j == 0:
+                    if tablero[i][j + 1].hay_mina():
+                        celdas_vecinas_con_mina += 1
+                    if tablero[i][j + 1].is_marcada():
+                        celdas_vecinas_marcadas += 1
+
+                    if tablero[i + 1][j].hay_mina():
+                        celdas_vecinas_con_mina += 1
+                    if tablero[i + 1][j].is_marcada():
+                        celdas_vecinas_marcadas += 1
+
+                    if tablero[i + 1][j + 1].hay_mina():
+                        celdas_vecinas_con_mina += 1
+                    if tablero[i + 1][j + 1].is_marcada():
+                        celdas_vecinas_marcadas += 1
+
+                elif j == len(tablero[0]) - 1:
+                    if tablero[i][j - 1].hay_mina():
+                        celdas_vecinas_con_mina += 1
+                    if tablero[i][j - 1].is_marcada():
+                        celdas_vecinas_marcadas += 1
+
+                    if tablero[i + 1][j].hay_mina():
+                        celdas_vecinas_con_mina += 1
+                    if tablero[i + 1][j].is_marcada():
+                        celdas_vecinas_marcadas += 1
+
+                    if tablero[i + 1][j - 1].hay_mina():
+                        celdas_vecinas_con_mina += 1
+                    if tablero[i + 1][j - 1].is_marcada():
+                        celdas_vecinas_marcadas += 1
+
+                else:
+                    if tablero[i][j - 1].hay_mina():
+                        celdas_vecinas_con_mina += 1
+                    if tablero[i][j - 1].is_marcada():
+                        celdas_vecinas_marcadas += 1
+
+                    if tablero[i][j + 1].hay_mina():
+                        celdas_vecinas_con_mina += 1
+                    if tablero[i][j + 1].is_marcada():
+                        celdas_vecinas_marcadas += 1
+
+                    if tablero[i + 1][j].hay_mina():
+                        celdas_vecinas_con_mina += 1
+                    if tablero[i + 1][j].is_marcada():
+                        celdas_vecinas_marcadas += 1
+
+                    if tablero[i + 1][j + 1].hay_mina():
+                        celdas_vecinas_con_mina += 1
+                    if tablero[i + 1][j + 1].is_marcada():
+                        celdas_vecinas_marcadas += 1
+
+            # Parte inferior
+            elif i == len(tablero) - 1:
+                if i % 2 == 0:
+                    if j == 0:
+                        if tablero[i][j + 1].hay_mina():
+                            celdas_vecinas_con_mina += 1
+                        if tablero[i][j + 1].is_marcada():
+                            celdas_vecinas_marcadas += 1
+
+                        if tablero[i - 1][j].hay_mina():
+                            celdas_vecinas_con_mina += 1
+                        if tablero[i - 1][j].is_marcada():
+                            celdas_vecinas_marcadas += 1
+
+                        if tablero[i - 1][j + 1].hay_mina():
+                            celdas_vecinas_con_mina += 1
+                        if tablero[i - 1][j + 1].is_marcada():
+                            celdas_vecinas_marcadas += 1
+
+                    elif j == len(tablero[0]) - 1:
+                        if tablero[i][j - 1].hay_mina():
+                            celdas_vecinas_con_mina += 1
+                        if tablero[i][j - 1].is_marcada():
+                            celdas_vecinas_marcadas += 1
+
+                        if tablero[i - 1][j].hay_mina():
+                            celdas_vecinas_con_mina += 1
+                        if tablero[i - 1][j].is_marcada():
+                            celdas_vecinas_marcadas += 1
+
+                    else:
+                        if tablero[i][j - 1].hay_mina():
+                            celdas_vecinas_con_mina += 1
+                        if tablero[i][j - 1].is_marcada():
+                            celdas_vecinas_marcadas += 1
+
+                        if tablero[i][j + 1].hay_mina():
+                            celdas_vecinas_con_mina += 1
+                        if tablero[i][j + 1].is_marcada():
+                            celdas_vecinas_marcadas += 1
+
+                        if tablero[i - 1][j].hay_mina():
+                            celdas_vecinas_con_mina += 1
+                        if tablero[i - 1][j].is_marcada():
+                            celdas_vecinas_marcadas += 1
+
+                        if tablero[i - 1][j + 1].hay_mina():
+                            celdas_vecinas_con_mina += 1
+                        if tablero[i - 1][j + 1].is_marcada():
+                            celdas_vecinas_marcadas += 1
+
+                else:
+                    if j == 0:
+                        if tablero[i][j + 1].hay_mina():
+                            celdas_vecinas_con_mina += 1
+                        if tablero[i][j + 1].is_marcada():
+                            celdas_vecinas_marcadas += 1
+
+                        if tablero[i - 1][j].hay_mina():
+                            celdas_vecinas_con_mina += 1
+                        if tablero[i - 1][j].is_marcada():
+                            celdas_vecinas_marcadas += 1
+
+                    elif j == len(tablero[0]) - 1:
+                        if tablero[i][j - 1].hay_mina():
+                            celdas_vecinas_con_mina += 1
+                        if tablero[i][j - 1].is_marcada():
+                            celdas_vecinas_marcadas += 1
+
+                        if tablero[i - 1][j].hay_mina():
+                            celdas_vecinas_con_mina += 1
+                        if tablero[i - 1][j].is_marcada():
+                            celdas_vecinas_marcadas += 1
+
+                        if tablero[i - 1][j - 1].hay_mina():
+                            celdas_vecinas_con_mina += 1
+                        if tablero[i - 1][j - 1].is_marcada():
+                            celdas_vecinas_marcadas += 1
+
+                    else:
+                        if tablero[i][j - 1].hay_mina():
+                            celdas_vecinas_con_mina += 1
+                        if tablero[i][j - 1].is_marcada():
+                            celdas_vecinas_marcadas += 1
+
+                        if tablero[i][j + 1].hay_mina():
+                            celdas_vecinas_con_mina += 1
+                        if tablero[i][j + 1].is_marcada():
+                            celdas_vecinas_marcadas += 1
+
+                        if tablero[i - 1][j - 1].hay_mina():
+                            celdas_vecinas_con_mina += 1
+                        if tablero[i - 1][j - 1].is_marcada():
+                            celdas_vecinas_marcadas += 1
+
+                        if tablero[i - 1][j].hay_mina():
+                            celdas_vecinas_con_mina += 1
+                        if tablero[i - 1][j].is_marcada():
+                            celdas_vecinas_marcadas += 1
+
+            # Lateral izquierdo
+            elif j == 0:
+                if i != 0 and i != len(tablero) - 1:
+                    if tablero[i][j + 1].hay_mina():
+                        celdas_vecinas_con_mina += 1
+                    if tablero[i][j + 1].is_marcada():
+                        celdas_vecinas_marcadas += 1
+
+                    if tablero[i - 1][j].hay_mina():
+                        celdas_vecinas_con_mina += 1
+                    if tablero[i - 1][j].is_marcada():
+                        celdas_vecinas_marcadas += 1
+
+                    if tablero[i + 1][j].hay_mina():
+                        celdas_vecinas_con_mina += 1
+                    if tablero[i + 1][j].is_marcada():
+                        celdas_vecinas_marcadas += 1
+
+            # Lateral derecho
+            elif j == len(tablero[0]) - 1:
+                if i != 0 and i != len(tablero) - 1:
+                    if tablero[i][j - 1].hay_mina():
+                        celdas_vecinas_con_mina += 1
+                    if tablero[i][j - 1].is_marcada():
+                        celdas_vecinas_marcadas += 1
+
+                    if tablero[i - 1][j].hay_mina():
+                        celdas_vecinas_con_mina += 1
+                    if tablero[i - 1][j].is_marcada():
+                        celdas_vecinas_marcadas += 1
+
+                    if tablero[i + 1][j].hay_mina():
+                        celdas_vecinas_con_mina += 1
+                    if tablero[i + 1][j].is_marcada():
+                        celdas_vecinas_marcadas += 1
+
+            # Interior
+            else:
+                if tablero[i - 1][j - 1].hay_mina():
+                    celdas_vecinas_con_mina += 1
+                if tablero[i - 1][j - 1].is_marcada():
+                    celdas_vecinas_marcadas += 1
+
+                if tablero[i - 1][j].hay_mina():
+                    celdas_vecinas_con_mina += 1
+                if tablero[i - 1][j].is_marcada():
+                    celdas_vecinas_marcadas += 1
+
+                if tablero[i][j - 1].hay_mina():
+                    celdas_vecinas_con_mina += 1
+                if tablero[i][j - 1].is_marcada():
+                    celdas_vecinas_marcadas += 1
+
+                if tablero[i][j + 1].hay_mina():
+                    celdas_vecinas_con_mina += 1
+                if tablero[i][j + 1].is_marcada():
+                    celdas_vecinas_marcadas += 1
+
+                if tablero[i + 1][j - 1].hay_mina():
+                    celdas_vecinas_con_mina += 1
+                if tablero[i + 1][j - 1].is_marcada():
+                    celdas_vecinas_marcadas += 1
+
+                if tablero[i + 1][j].hay_mina():
+                    celdas_vecinas_con_mina += 1
+                if tablero[i + 1][j].is_marcada():
+                    celdas_vecinas_marcadas += 1
+
+            minas_por_descubrir = celdas_vecinas_con_mina - celdas_vecinas_marcadas
+
+            tablero[i][j].set_minas_por_descubrir(minas_por_descubrir)
+
+            celdas_vecinas_con_mina = 0
+            celdas_vecinas_marcadas = 0
 
 def imprimir_tablero(tablero):
     """
@@ -227,7 +468,8 @@ def imprimir_tablero(tablero):
         for j in range(len(tablero[0])):
             if j == 0:
                 print CNS,
-            print CSOM + " " + CNS,
+
+            print  get_caracter_a_imprimir(tablero[i][j]) + " " + CNS,
 
             if j == len(tablero[0]) - 1:
                 print
@@ -252,6 +494,28 @@ def imprimir_tablero(tablero):
 
     print
 
+def get_caracter_a_imprimir(celda):
+    """
+    Devuelve el caracter a imprimir teniendo en cuenta el estado de las celdas, tal y como se especifica en el
+    enunciado.
+
+    :param celda: celda en la que se evalúa el estado
+    :return: caracter a imprimir según el estado de la celda
+    """
+    if not celda.is_abierta() and not celda.is_marcada():
+        return CSOM
+    elif not celda.is_abierta() and celda.is_marcada():
+        return "X"
+    elif celda.is_abierta() and celda.get_minas_por_descubrir() == 0:
+        return " "
+    elif celda.is_abierta() and celda.get_minas_por_descubrir() < 0:
+        return "?"
+    elif celda.is_abierta() and celda.get_minas_por_descubrir() > 0:
+        return str(celda.get_minas_por_descubrir())
+    elif celda.is_abierta() and celda.is_marcada() and not celda.hay_mina():
+        return "#"
+    elif celda.is_abierta() and not celda.is_marcada() and celda.hay_mina():
+        return "*"
 
 def leer_tablero():
     """
@@ -333,7 +597,7 @@ def validar_jugada(jugada, tablero, minas):
     :param minas: minas que tiene el tablero
     :return: True si la jugada es válida y False en caso de que no lo sea
     """
-    if len(jugada) < 3 or jugada[0] not in NOMBRE_FILAS[:len(tablero)] or jugada[1] not in NOMBRE_COLUMNAS[:len(tablero[0])] or jugada[2] not in "!*":
+    if len(jugada) < 3 or jugada[0] not in NOMBRE_FILAS[:len(tablero)] or jugada[1] not in NOMBRE_COLUMNAS[:len(tablero[0])] or jugada[2] not in ACCIONES:
         print "ENTRADA ERRONEA"
         return False
 
