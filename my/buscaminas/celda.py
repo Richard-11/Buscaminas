@@ -67,6 +67,13 @@ class Celda():
             self.incrementa_celdas_marcadas()
 
     def abrir(self):
+        """
+        Establece una Celda como abierta. Si se intenta abrir una celda que ya está abierta, se lanza una excepción.
+        """
+
+        if self.is_abierta():
+            raise ValueError("No se puede abrir una celda que ya está abierta.")
+
         self.__abierta = True
 
 
@@ -78,13 +85,19 @@ class Celda():
         """
         return self.__minas_por_descubrir
 
-    def set_minas_por_descubrir(self, nMinas):
+    def set_minas_por_descubrir(self, minas_por_descubrir):
         """
         Establece el número de minas por descubrir de las Celda.
 
-        :param nMinas: número de minas a descubrir
+        :param minas_por_descubrir: número de minas a descubrir
         """
-        self.__minas_por_descubrir = nMinas
+        self.__minas_por_descubrir = minas_por_descubrir
+
+    def get_fila(self):
+        return self.__fila
+
+    def get_columna(self):
+        return self.__columna
 
     def add_vecina(self, celda):
         self.__celdas_vecinas.append(celda)
@@ -112,3 +125,11 @@ class Celda():
         Devuelve la cantidad de celdas que están marcadas.
         """
         return self.__celdas_marcadas
+
+    @classmethod
+    def reiniciar_celdas_marcadas(cls):
+        """
+        Reinicia a 0 la cantidas de celdas marcadas.
+        """
+
+        cls.__celdas_marcadas = 0

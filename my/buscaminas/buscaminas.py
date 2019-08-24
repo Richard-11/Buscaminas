@@ -113,6 +113,7 @@ Autor: Richard Albán Fernández
 """
 
 import random
+import time
 from celda import Celda
 
 # Caracteres asociados a las acciones (! marcar, * abrir)
@@ -141,7 +142,9 @@ CSOM = u'\u2593'  # ▒
 
 
 def jugar(filas, columnas, minas, leer_fichero = False):
-    fin = False
+    fin_de_partida = False
+    partida_ganada = False
+    tiempo_inicio = 0
 
     if leer_fichero:
         tablero, minas = leer_tablero()
@@ -151,9 +154,10 @@ def jugar(filas, columnas, minas, leer_fichero = False):
     calcular_minas_por_descubrir(tablero)
 
     if tablero:
-        imprimir_tablero(tablero, minas)
+        imprimir_tablero(tablero, minas, tiempo_inicio)
+        tiempo_inicio = time.time()
 
-        while True:
+        while not fin_de_partida:
             jugada = raw_input("Indique celda y acción (! marcar, * abrir): ")
             print
 
@@ -166,20 +170,33 @@ def jugar(filas, columnas, minas, leer_fichero = False):
                 if not jugada_valida:
                     break
 
-                fin = hacer_jugada(jugada[i], tablero)
+                hacer_jugada(jugada[i], tablero)
                 calcular_minas_por_descubrir(tablero)
 
-                if fin:
+                fin_de_partida, partida_ganada = detectar_fin_de_partida(tablero, minas)
+
+                if fin_de_partida:
+                    abrir_celdas(tablero)
                     break
 
-            imprimir_tablero(tablero, minas)
+            tiempo_fin = time.time()
+            tiempo = tiempo_fin - tiempo_inicio
 
-            if fin:
+            if fin_de_partida:
+                if partida_ganada:
+
+                    imprimir_tablero(tablero, minas, tiempo)
+                    print "¡HAS GANADO LA PARTIDA! TIEMPO: "
+
+                else:
+                    imprimir_tablero(tablero, minas, tiempo)
+                    print "GAME OVER"
+
                 break
 
+            imprimir_tablero(tablero, minas, tiempo)
 
-
-
+    Celda.reiniciar_celdas_marcadas()
 
 
 def crear_tablero(filas, columnas, minas):
@@ -629,14 +646,14 @@ def calcular_minas_por_descubrir(tablero):
             celdas_vecinas_marcadas = 0
 
 
-def imprimir_tablero(tablero, minas):
+def imprimir_tablero(tablero, minas, tiempo):
     """
     Imprime el tablero que se pasa como parámetro.
 
     :param tablero: tablero a imprimir
     """
 
-    print "MINAS RESTANTES: " + str(minas) + " | MARCADAS: " + str(Celda.get_celdas_marcadas()) + " | TIEMPO: "
+    print "MINAS RESTANTES: %2d | MARCADAS: %2d | TIEMPO: %.1f" % (minas, Celda.get_celdas_marcadas(), tiempo)
     print "    ",
 
     for i in range(len(tablero[0])):
@@ -693,21 +710,25 @@ def get_caracter_a_imprimir(celda):
     :param celda: celda en la que se evalúa el estado
     :return: caracter a imprimir según el estado de la celda
     """
-    if not celda.is_abierta() and not celda.is_marcada():
-        return CSOM
-    elif not celda.is_abierta() and celda.is_marcada():
-        return "X"
-    elif celda.is_abierta() and celda.get_minas_por_descubrir() == 0:
-        return " "
-    elif celda.is_abierta() and celda.get_minas_por_descubrir() < 0:
-        return "?"
-    elif celda.is_abierta() and celda.get_minas_por_descubrir() > 0:
-        return str(celda.get_minas_por_descubrir())
-    elif celda.is_abierta() and celda.is_marcada() and not celda.hay_mina():
-        return "#"
-    elif celda.is_abierta() and not celda.is_marcada() and celda.hay_mina():
-        return "*"
+    caracter = ""
 
+    if not celda.is_abierta() and not celda.is_marcada():
+        caracter = CSOM
+    elif not celda.is_abierta() and celda.is_marcada():
+        caracter = "X"
+    elif celda.is_abierta() and celda.get_minas_por_descubrir() == 0:
+        caracter = " "
+    elif celda.is_abierta() and celda.get_minas_por_descubrir() < 0:
+        caracter = "?"
+    elif celda.is_abierta() and celda.get_minas_por_descubrir() > 0:
+        caracter = str(celda.get_minas_por_descubrir())
+
+    if celda.is_abierta() and celda.is_marcada() and not celda.hay_mina():
+        caracter = "#"
+    elif celda.is_abierta() and not celda.is_marcada() and celda.hay_mina():
+        caracter = "*"
+
+    return caracter
 
 def leer_tablero():
     """
@@ -826,6 +847,12 @@ def validar_jugada(jugada, tablero, minas):
 
 
 def hacer_jugada(jugada, tablero):
+    """
+    Se realiza la jugada que se pasa como parámetro en el tablero que también se pasa como parámetro.
+
+    :param jugada: jugada a realizar
+    :param tablero: tablero donde se hará la jugada
+    """
     fila = DIC_FILAS.get(jugada[0])
     columna = DIC_COLUMNAS.get(jugada[1])
     accion = jugada[2]
@@ -834,20 +861,73 @@ def hacer_jugada(jugada, tablero):
         tablero[fila][columna].marcar()
 
     elif accion == "*":
-        if not tablero[fila][columna].hay_mina():
+        if tablero[fila][columna].is_abierta() and tablero[fila][columna].get_minas_por_descubrir() <= 0:
+            abrir_recursivamente(tablero[fila][columna])
+        else:
             tablero[fila][columna].abrir()
 
-        elif tablero[fila][columna].hay_mina():
-            print "GAME OVER"
-            return True
 
-        elif tablero[fila][columna].get_minas_por_descubrir() <= 0:
-            abrir_recursivamente(tablero, fila, columna)
+def abrir_recursivamente(celda):
+    """
+    Abre de forma recusiva las celdas vecinas de una celda en concreto que se pasa como parámetro si la celda vecina
+    no está abierta ni marcada.
+
+    :param celda: celda de la que se quieren abrir las celdas vecinas
+    """
+
+    if not celda.get_celdas_vecinas():
+        return
+    else:
+        celda_vecina = celda.get_celdas_vecinas().pop()
+
+        if not celda_vecina.is_abierta() and not celda_vecina.is_marcada():
+            celda_vecina.abrir()
+
+        abrir_recursivamente(celda_vecina)
 
 
-def abrir_recursivamente(tablero, fila, columna):
+def detectar_fin_de_partida(tablero, minas):
+    """
+    Determina si una partida ha llegado a su fin, y además si la partida se ha ganado o se ha perdido, según las
+    condiciones que se detallan en el enunciado.
 
-    pass
+    :param tablero: tablero a detectar el fin de partida
+    :param minas: minas que contiene el tablero
+    :return: una tupla en la que el primer elemento determina si se ha detectado el final de la partida (True si se
+    detecta y False en caso contrario), y el segundo indica si se ha ganado (True) o si se ha perdido (False)
+    """
+
+    todas_abiertas_o_marcadas = True
+    fin_de_partida = False
+    partida_ganada = False
+
+    for i in range(len(tablero)):
+        for j in range(len(tablero[0])):
+            if tablero[i][j].hay_mina() and tablero[i][j].is_abierta():
+                fin_de_partida = True
+
+            if not tablero[i][j].is_marcada():
+                if not tablero[i][j].is_abierta():
+                    todas_abiertas_o_marcadas = False
+
+    if Celda.get_celdas_marcadas() == minas and todas_abiertas_o_marcadas:
+        partida_ganada = True
+        fin_de_partida = True
+
+    return fin_de_partida, partida_ganada
+
+
+def abrir_celdas(tablero):
+    """
+    Abre todas las celdas de tablero.
+
+    :param tablero: tablero del que se abren las celdas
+    """
+
+    for i in range(len(tablero)):
+        for j in range(len(tablero[0])):
+            if not tablero[i][j].is_abierta():
+                tablero[i][j].abrir()
 
 
 # main
