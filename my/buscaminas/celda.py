@@ -11,9 +11,10 @@ class Celda():
         self.__abierta = False
         self.__marcada = False
         self.__hay_mina = False
-        self.__minas_por_descubrir = None
         self.__fila = fila
         self.__columna = columna
+        self.__minas_por_descubrir = None
+        self.__celdas_vecinas = []
 
     def is_abierta(self):
         """
@@ -57,13 +58,16 @@ class Celda():
         """
         if self.is_marcada():
             self.__marcada = False
-            self.__celdas_marcadas -= 1
+            self.decrementa_celdas_marcadas()
         else:
             if self.is_abierta():
                 raise ValueError("No se puede marcar una celda que ya está abierta.")
 
             self.__marcada = True
-            self.__celdas_marcadas += 1
+            self.incrementa_celdas_marcadas()
+
+    def abrir(self):
+        self.__abierta = True
 
 
     def get_minas_por_descubrir(self):
@@ -82,13 +86,29 @@ class Celda():
         """
         self.__minas_por_descubrir = nMinas
 
-    def get_fila(self):
-        return self.__fila
+    def add_vecina(self, celda):
+        self.__celdas_vecinas.append(celda)
 
-    def get_columna(self):
-        return self.__columna
+    def get_celdas_vecinas(self):
+        return self.__celdas_vecinas
 
     @classmethod
-    def get_celdas_marcadas(cls):
-        """Devuelve el número de total de celdas marcadas."""
-        return cls.__celdas_marcadas
+    def incrementa_celdas_marcadas(cls):
+        """
+        Incrementa en uno el número total de celdas marcadas.
+        """
+        cls.__celdas_marcadas += 1
+
+    @classmethod
+    def decrementa_celdas_marcadas(cls):
+        """
+        Decrementa en uno el número total de celdas marcadas.
+        """
+        cls.__celdas_marcadas -= 1
+
+    @classmethod
+    def get_celdas_marcadas(self):
+        """
+        Devuelve la cantidad de celdas que están marcadas.
+        """
+        return self.__celdas_marcadas

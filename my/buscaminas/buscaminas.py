@@ -141,20 +141,21 @@ CSOM = u'\u2593'  # ▒
 
 
 def jugar(filas, columnas, minas, leer_fichero = False):
-    jugada_valida = True
+    fin = False
 
     if leer_fichero:
-        tablero = leer_tablero()
+        tablero, minas = leer_tablero()
     else:
         tablero = crear_tablero(filas, columnas, minas)
 
     calcular_minas_por_descubrir(tablero)
 
     if tablero:
-        imprimir_tablero(tablero)
+        imprimir_tablero(tablero, minas)
 
         while True:
             jugada = raw_input("Indique celda y acción (! marcar, * abrir): ")
+            print
 
             # Se dividen las jugadas en una lista, en la que cada elemento es una jugada distinta
             jugada = dividir_en_subjugadas(jugada)
@@ -162,12 +163,19 @@ def jugar(filas, columnas, minas, leer_fichero = False):
             for i in range(len(jugada)):
                 jugada_valida = validar_jugada(jugada[i], tablero, minas)
 
-                if jugada_valida:
-                    pass
-                else:
+                if not jugada_valida:
                     break
 
+                fin = hacer_jugada(jugada[i], tablero)
+                calcular_minas_por_descubrir(tablero)
 
+                if fin:
+                    break
+
+            imprimir_tablero(tablero, minas)
+
+            if fin:
+                break
 
 
 
@@ -204,7 +212,14 @@ def crear_tablero(filas, columnas, minas):
 
     return tablero
 
+
 def calcular_minas_por_descubrir(tablero):
+    """
+    Se calcula el número de minas por descubrir que tiene cada una de las celdas. Además, se añaden las celdas vecinas
+    de cada Celda en una lista que tiene cada objeto de este tipo.
+
+    :param tablero: tablero en el que se calcula el número de minas por descubrir de cada celda
+    """
     celdas_vecinas_con_mina = 0
     celdas_vecinas_marcadas = 0
 
@@ -229,6 +244,11 @@ def calcular_minas_por_descubrir(tablero):
                     if tablero[i + 1][j + 1].is_marcada():
                         celdas_vecinas_marcadas += 1
 
+                    if not tablero[i][j].get_celdas_vecinas():
+                        tablero[i][j].add_vecina(tablero[i][j + 1])
+                        tablero[i][j].add_vecina(tablero[i + 1][j])
+                        tablero[i][j].add_vecina(tablero[i + 1][j + 1])
+
                 elif j == len(tablero[0]) - 1:
                     if tablero[i][j - 1].hay_mina():
                         celdas_vecinas_con_mina += 1
@@ -244,6 +264,11 @@ def calcular_minas_por_descubrir(tablero):
                         celdas_vecinas_con_mina += 1
                     if tablero[i + 1][j - 1].is_marcada():
                         celdas_vecinas_marcadas += 1
+
+                    if not tablero[i][j].get_celdas_vecinas():
+                        tablero[i][j].add_vecina(tablero[i][j - 1])
+                        tablero[i][j].add_vecina(tablero[i + 1][j])
+                        tablero[i][j].add_vecina(tablero[i + 1][j - 1])
 
                 else:
                     if tablero[i][j - 1].hay_mina():
@@ -266,6 +291,12 @@ def calcular_minas_por_descubrir(tablero):
                     if tablero[i + 1][j + 1].is_marcada():
                         celdas_vecinas_marcadas += 1
 
+                    if not tablero[i][j].get_celdas_vecinas():
+                        tablero[i][j].add_vecina(tablero[i][j - 1])
+                        tablero[i][j].add_vecina(tablero[i][j + 1])
+                        tablero[i][j].add_vecina(tablero[i + 1][j])
+                        tablero[i][j].add_vecina(tablero[i + 1][j + 1])
+
             # Parte inferior
             elif i == len(tablero) - 1:
                 if i % 2 == 0:
@@ -285,6 +316,11 @@ def calcular_minas_por_descubrir(tablero):
                         if tablero[i - 1][j + 1].is_marcada():
                             celdas_vecinas_marcadas += 1
 
+                        if not tablero[i][j].get_celdas_vecinas():
+                            tablero[i][j].add_vecina(tablero[i][j + 1])
+                            tablero[i][j].add_vecina(tablero[i - 1][j])
+                            tablero[i][j].add_vecina(tablero[i - 1][j + 1])
+
                     elif j == len(tablero[0]) - 1:
                         if tablero[i][j - 1].hay_mina():
                             celdas_vecinas_con_mina += 1
@@ -295,6 +331,10 @@ def calcular_minas_por_descubrir(tablero):
                             celdas_vecinas_con_mina += 1
                         if tablero[i - 1][j].is_marcada():
                             celdas_vecinas_marcadas += 1
+
+                        if not tablero[i][j].get_celdas_vecinas():
+                            tablero[i][j].add_vecina(tablero[i][j - 1])
+                            tablero[i][j].add_vecina(tablero[i - 1][j])
 
                     else:
                         if tablero[i][j - 1].hay_mina():
@@ -317,6 +357,12 @@ def calcular_minas_por_descubrir(tablero):
                         if tablero[i - 1][j + 1].is_marcada():
                             celdas_vecinas_marcadas += 1
 
+                        if not tablero[i][j].get_celdas_vecinas():
+                            tablero[i][j].add_vecina(tablero[i][j - 1])
+                            tablero[i][j].add_vecina(tablero[i][j + 1])
+                            tablero[i][j].add_vecina(tablero[i - 1][j])
+                            tablero[i][j].add_vecina(tablero[i - 1][j + 1])
+
                 else:
                     if j == 0:
                         if tablero[i][j + 1].hay_mina():
@@ -328,6 +374,10 @@ def calcular_minas_por_descubrir(tablero):
                             celdas_vecinas_con_mina += 1
                         if tablero[i - 1][j].is_marcada():
                             celdas_vecinas_marcadas += 1
+
+                        if not tablero[i][j].get_celdas_vecinas():
+                            tablero[i][j].add_vecina(tablero[i][j + 1])
+                            tablero[i][j].add_vecina(tablero[i - 1][j])
 
                     elif j == len(tablero[0]) - 1:
                         if tablero[i][j - 1].hay_mina():
@@ -344,6 +394,11 @@ def calcular_minas_por_descubrir(tablero):
                             celdas_vecinas_con_mina += 1
                         if tablero[i - 1][j - 1].is_marcada():
                             celdas_vecinas_marcadas += 1
+
+                        if not tablero[i][j].get_celdas_vecinas():
+                            tablero[i][j].add_vecina(tablero[i][j - 1])
+                            tablero[i][j].add_vecina(tablero[i - 1][j])
+                            tablero[i][j].add_vecina(tablero[i - 1][j - 1])
 
                     else:
                         if tablero[i][j - 1].hay_mina():
@@ -366,35 +421,147 @@ def calcular_minas_por_descubrir(tablero):
                         if tablero[i - 1][j].is_marcada():
                             celdas_vecinas_marcadas += 1
 
+                        if not tablero[i][j].get_celdas_vecinas():
+                            tablero[i][j].add_vecina(tablero[i][j - 1])
+                            tablero[i][j].add_vecina(tablero[i][j + 1])
+                            tablero[i][j].add_vecina(tablero[i - 1][j - 1])
+                            tablero[i][j].add_vecina(tablero[i - 1][j])
+
             # Lateral izquierdo
             elif j == 0:
                 if i != 0 and i != len(tablero) - 1:
-                    if tablero[i][j + 1].hay_mina():
-                        celdas_vecinas_con_mina += 1
-                    if tablero[i][j + 1].is_marcada():
-                        celdas_vecinas_marcadas += 1
+                    if i % 2 == 0:
+                        if tablero[i - 1][j].hay_mina():
+                            celdas_vecinas_con_mina += 1
+                        if tablero[i - 1][j].is_marcada():
+                            celdas_vecinas_marcadas += 1
 
+                        if tablero[i - 1][j + 1].hay_mina():
+                            celdas_vecinas_con_mina += 1
+                        if tablero[i - 1][j + 1].is_marcada():
+                            celdas_vecinas_marcadas += 1
+
+                        if tablero[i][j + 1].hay_mina():
+                            celdas_vecinas_con_mina += 1
+                        if tablero[i][j + 1].is_marcada():
+                            celdas_vecinas_marcadas += 1
+
+                        if tablero[i + 1][j].hay_mina():
+                            celdas_vecinas_con_mina += 1
+                        if tablero[i + 1][j].is_marcada():
+                            celdas_vecinas_marcadas += 1
+
+                        if tablero[i + 1][j + 1].hay_mina():
+                            celdas_vecinas_con_mina += 1
+                        if tablero[i + 1][j + 1].is_marcada():
+                            celdas_vecinas_marcadas += 1
+
+                        if not tablero[i][j].get_celdas_vecinas():
+                            tablero[i][j].add_vecina(tablero[i - 1][j])
+                            tablero[i][j].add_vecina(tablero[i - 1][j + 1])
+                            tablero[i][j].add_vecina(tablero[i][j + 1])
+                            tablero[i][j].add_vecina(tablero[i + 1][j])
+                            tablero[i][j].add_vecina(tablero[i + 1][j + 1])
+
+                    else:
+                        if tablero[i][j + 1].hay_mina():
+                            celdas_vecinas_con_mina += 1
+                        if tablero[i][j + 1].is_marcada():
+                            celdas_vecinas_marcadas += 1
+
+                        if tablero[i - 1][j].hay_mina():
+                            celdas_vecinas_con_mina += 1
+                        if tablero[i - 1][j].is_marcada():
+                            celdas_vecinas_marcadas += 1
+
+                        if tablero[i + 1][j].hay_mina():
+                            celdas_vecinas_con_mina += 1
+                        if tablero[i + 1][j].is_marcada():
+                            celdas_vecinas_marcadas += 1
+
+                        if not tablero[i][j].get_celdas_vecinas():
+                            tablero[i][j].add_vecina(tablero[i][j + 1])
+                            tablero[i][j].add_vecina(tablero[i - 1][j])
+                            tablero[i][j].add_vecina(tablero[i + 1][j])
+
+            # Lateral derecho
+            elif j == len(tablero[0]) - 1:
+                if i != 0 and i != len(tablero) - 1:
+                    if i % 2 == 0:
+                        if tablero[i][j - 1].hay_mina():
+                            celdas_vecinas_con_mina += 1
+                        if tablero[i][j - 1].is_marcada():
+                            celdas_vecinas_marcadas += 1
+
+                        if tablero[i - 1][j].hay_mina():
+                            celdas_vecinas_con_mina += 1
+                        if tablero[i - 1][j].is_marcada():
+                            celdas_vecinas_marcadas += 1
+
+                        if tablero[i + 1][j].hay_mina():
+                            celdas_vecinas_con_mina += 1
+                        if tablero[i + 1][j].is_marcada():
+                            celdas_vecinas_marcadas += 1
+
+                        if not tablero[i][j].get_celdas_vecinas():
+                            tablero[i][j].add_vecina(tablero[i][j - 1])
+                            tablero[i][j].add_vecina(tablero[i - 1][j])
+                            tablero[i][j].add_vecina(tablero[i + 1][j])
+
+                    else:
+                        if tablero[i - 1][j - 1].hay_mina():
+                            celdas_vecinas_con_mina += 1
+                        if tablero[i - 1][j - 1].is_marcada():
+                            celdas_vecinas_marcadas += 1
+
+                        if tablero[i - 1][j].hay_mina():
+                            celdas_vecinas_con_mina += 1
+                        if tablero[i - 1][j].is_marcada():
+                            celdas_vecinas_marcadas += 1
+
+                        if tablero[i][j - 1].hay_mina():
+                            celdas_vecinas_con_mina += 1
+                        if tablero[i][j - 1].is_marcada():
+                            celdas_vecinas_marcadas += 1
+
+                        if tablero[i + 1][j - 1].hay_mina():
+                            celdas_vecinas_con_mina += 1
+                        if tablero[i + 1][j - 1].is_marcada():
+                            celdas_vecinas_marcadas += 1
+
+                        if tablero[i + 1][j].hay_mina():
+                            celdas_vecinas_con_mina += 1
+                        if tablero[i + 1][j].is_marcada():
+                            celdas_vecinas_marcadas += 1
+
+                        if not tablero[i][j].get_celdas_vecinas():
+                            tablero[i][j].add_vecina(tablero[i - 1][j - 1])
+                            tablero[i][j].add_vecina(tablero[i - 1][j])
+                            tablero[i][j].add_vecina(tablero[i][j - 1])
+                            tablero[i][j].add_vecina(tablero[i + 1][j - 1])
+                            tablero[i][j].add_vecina(tablero[i + 1][j])
+
+            # Interior
+            else:
+                if i % 2 == 0:
                     if tablero[i - 1][j].hay_mina():
                         celdas_vecinas_con_mina += 1
                     if tablero[i - 1][j].is_marcada():
                         celdas_vecinas_marcadas += 1
 
-                    if tablero[i + 1][j].hay_mina():
+                    if tablero[i - 1][j + 1].hay_mina():
                         celdas_vecinas_con_mina += 1
-                    if tablero[i + 1][j].is_marcada():
+                    if tablero[i - 1][j + 1].is_marcada():
                         celdas_vecinas_marcadas += 1
 
-            # Lateral derecho
-            elif j == len(tablero[0]) - 1:
-                if i != 0 and i != len(tablero) - 1:
                     if tablero[i][j - 1].hay_mina():
                         celdas_vecinas_con_mina += 1
                     if tablero[i][j - 1].is_marcada():
                         celdas_vecinas_marcadas += 1
 
-                    if tablero[i - 1][j].hay_mina():
+                    if tablero[i][j + 1].hay_mina():
                         celdas_vecinas_con_mina += 1
-                    if tablero[i - 1][j].is_marcada():
+                    if tablero[i][j + 1].is_marcada():
                         celdas_vecinas_marcadas += 1
 
                     if tablero[i + 1][j].hay_mina():
@@ -402,37 +569,57 @@ def calcular_minas_por_descubrir(tablero):
                     if tablero[i + 1][j].is_marcada():
                         celdas_vecinas_marcadas += 1
 
-            # Interior
-            else:
-                if tablero[i - 1][j - 1].hay_mina():
-                    celdas_vecinas_con_mina += 1
-                if tablero[i - 1][j - 1].is_marcada():
-                    celdas_vecinas_marcadas += 1
+                    if tablero[i + 1][j + 1].hay_mina():
+                        celdas_vecinas_con_mina += 1
+                    if tablero[i + 1][j + 1].is_marcada():
+                        celdas_vecinas_marcadas += 1
 
-                if tablero[i - 1][j].hay_mina():
-                    celdas_vecinas_con_mina += 1
-                if tablero[i - 1][j].is_marcada():
-                    celdas_vecinas_marcadas += 1
+                    if not tablero[i][j].get_celdas_vecinas():
+                        tablero[i][j].add_vecina(tablero[i - 1][j])
+                        tablero[i][j].add_vecina(tablero[i - 1][j + 1])
+                        tablero[i][j].add_vecina(tablero[i][j - 1])
+                        tablero[i][j].add_vecina(tablero[i][j + 1])
+                        tablero[i][j].add_vecina(tablero[i + 1][j])
+                        tablero[i][j].add_vecina(tablero[i + 1][j + 1])
 
-                if tablero[i][j - 1].hay_mina():
-                    celdas_vecinas_con_mina += 1
-                if tablero[i][j - 1].is_marcada():
-                    celdas_vecinas_marcadas += 1
+                else:
+                    if tablero[i - 1][j - 1].hay_mina():
+                        celdas_vecinas_con_mina += 1
+                    if tablero[i - 1][j - 1].is_marcada():
+                        celdas_vecinas_marcadas += 1
 
-                if tablero[i][j + 1].hay_mina():
-                    celdas_vecinas_con_mina += 1
-                if tablero[i][j + 1].is_marcada():
-                    celdas_vecinas_marcadas += 1
+                    if tablero[i - 1][j].hay_mina():
+                        celdas_vecinas_con_mina += 1
+                    if tablero[i - 1][j].is_marcada():
+                        celdas_vecinas_marcadas += 1
 
-                if tablero[i + 1][j - 1].hay_mina():
-                    celdas_vecinas_con_mina += 1
-                if tablero[i + 1][j - 1].is_marcada():
-                    celdas_vecinas_marcadas += 1
+                    if tablero[i][j - 1].hay_mina():
+                        celdas_vecinas_con_mina += 1
+                    if tablero[i][j - 1].is_marcada():
+                        celdas_vecinas_marcadas += 1
 
-                if tablero[i + 1][j].hay_mina():
-                    celdas_vecinas_con_mina += 1
-                if tablero[i + 1][j].is_marcada():
-                    celdas_vecinas_marcadas += 1
+                    if tablero[i][j + 1].hay_mina():
+                        celdas_vecinas_con_mina += 1
+                    if tablero[i][j + 1].is_marcada():
+                        celdas_vecinas_marcadas += 1
+
+                    if tablero[i + 1][j - 1].hay_mina():
+                        celdas_vecinas_con_mina += 1
+                    if tablero[i + 1][j - 1].is_marcada():
+                        celdas_vecinas_marcadas += 1
+
+                    if tablero[i + 1][j].hay_mina():
+                        celdas_vecinas_con_mina += 1
+                    if tablero[i + 1][j].is_marcada():
+                        celdas_vecinas_marcadas += 1
+
+                    if not tablero[i][j].get_celdas_vecinas():
+                        tablero[i][j].add_vecina(tablero[i - 1][j - 1])
+                        tablero[i][j].add_vecina(tablero[i - 1][j])
+                        tablero[i][j].add_vecina(tablero[i][j - 1])
+                        tablero[i][j].add_vecina(tablero[i][j + 1])
+                        tablero[i][j].add_vecina(tablero[i + 1][j - 1])
+                        tablero[i][j].add_vecina(tablero[i + 1][j])
 
             minas_por_descubrir = celdas_vecinas_con_mina - celdas_vecinas_marcadas
 
@@ -441,12 +628,15 @@ def calcular_minas_por_descubrir(tablero):
             celdas_vecinas_con_mina = 0
             celdas_vecinas_marcadas = 0
 
-def imprimir_tablero(tablero):
+
+def imprimir_tablero(tablero, minas):
     """
     Imprime el tablero que se pasa como parámetro.
 
     :param tablero: tablero a imprimir
     """
+
+    print "MINAS RESTANTES: " + str(minas) + " | MARCADAS: " + str(Celda.get_celdas_marcadas()) + " | TIEMPO: "
     print "    ",
 
     for i in range(len(tablero[0])):
@@ -469,7 +659,7 @@ def imprimir_tablero(tablero):
             if j == 0:
                 print CNS,
 
-            print  get_caracter_a_imprimir(tablero[i][j]) + " " + CNS,
+            print get_caracter_a_imprimir(tablero[i][j]) + " " + CNS,
 
             if j == len(tablero[0]) - 1:
                 print
@@ -494,6 +684,7 @@ def imprimir_tablero(tablero):
 
     print
 
+
 def get_caracter_a_imprimir(celda):
     """
     Devuelve el caracter a imprimir teniendo en cuenta el estado de las celdas, tal y como se especifica en el
@@ -517,14 +708,19 @@ def get_caracter_a_imprimir(celda):
     elif celda.is_abierta() and not celda.is_marcada() and celda.hay_mina():
         return "*"
 
+
 def leer_tablero():
     """
-    Devuelve un tablero creado a partir de la lectura de un fichero.
+    Devuelve un tablero creado a partir de la lectura de un fichero y el número de minas que tiene el tablero.
 
-    :return: tablero implementado según el contenido del fichero
+    :return: tablero implementado según el contenido del fichero y número de minas que contiene
     """
     nombre_fichero = raw_input("Introduce el nombre del fichero: ")
     tablero = []
+    minas = 0
+
+    print
+
     try:
         fich = open(nombre_fichero, "r")
 
@@ -543,6 +739,7 @@ def leer_tablero():
                 if lineas_ficheros[i][j] == "*":
                     celda.poner_mina()
                     componentes_filas.append(celda)
+                    minas += 1
                 elif lineas_ficheros[i][j] == ".":
                     componentes_filas.append(celda)
 
@@ -553,7 +750,8 @@ def leer_tablero():
     except:
         print "El fichero no cumple con el formato adecuado para la definición del tablero."
 
-    return tablero
+    return tablero, minas
+
 
 def dividir_en_subjugadas(jugada):
     """
@@ -588,6 +786,7 @@ def dividir_en_subjugadas(jugada):
 
     return lista_jugadas
 
+
 def validar_jugada(jugada, tablero, minas):
     """
     Determina si una jugada es válida o no, teniendo en cuenta las condiciones del enunciado.
@@ -598,7 +797,7 @@ def validar_jugada(jugada, tablero, minas):
     :return: True si la jugada es válida y False en caso de que no lo sea
     """
     if len(jugada) < 3 or jugada[0] not in NOMBRE_FILAS[:len(tablero)] or jugada[1] not in NOMBRE_COLUMNAS[:len(tablero[0])] or jugada[2] not in ACCIONES:
-        print "ENTRADA ERRONEA"
+        print "ENTRADA ERRONEA\n"
         return False
 
     fila = DIC_FILAS.get(jugada[0])
@@ -607,26 +806,49 @@ def validar_jugada(jugada, tablero, minas):
 
     if accion == "!":
         if Celda.get_celdas_marcadas() + 1 > minas:
-            print "NO SE PUEDEN MARCAR MAS CELDAS QUE MINAS"
+            print "NO SE PUEDEN MARCAR MAS CELDAS QUE MINAS\n"
             return False
 
         if tablero[fila][columna].is_abierta():
-            print "NO SE PUEDE MARCAR UNA CELDA ABIERTA"
+            print "NO SE PUEDE MARCAR UNA CELDA ABIERTA\n"
             return False
 
     if accion == "*":
         if tablero[fila][columna].is_marcada():
-            print "NO SE PUEDE ABRIR UNA CELDA MARCADA"
+            print "NO SE PUEDE ABRIR UNA CELDA MARCADA\n"
             return False
 
         if tablero[fila][columna].is_abierta() and tablero[fila][columna].get_minas_por_descubrir() > 0:
-            print "CELDA YA ABIERTA. NO SE PUEDEN ABRIR LAS CELDAS VECINAS POR NUMERO INSUFICIENTE DE MARCAS"
+            print "CELDA YA ABIERTA. NO SE PUEDEN ABRIR LAS CELDAS VECINAS POR NUMERO INSUFICIENTE DE MARCAS\n"
             return False
 
     return True
 
-def hacer_jugada(jugada):
+
+def hacer_jugada(jugada, tablero):
+    fila = DIC_FILAS.get(jugada[0])
+    columna = DIC_COLUMNAS.get(jugada[1])
+    accion = jugada[2]
+
+    if accion == "!":
+        tablero[fila][columna].marcar()
+
+    elif accion == "*":
+        if not tablero[fila][columna].hay_mina():
+            tablero[fila][columna].abrir()
+
+        elif tablero[fila][columna].hay_mina():
+            print "GAME OVER"
+            return True
+
+        elif tablero[fila][columna].get_minas_por_descubrir() <= 0:
+            abrir_recursivamente(tablero, fila, columna)
+
+
+def abrir_recursivamente(tablero, fila, columna):
+
     pass
+
 
 # main
 while True:
