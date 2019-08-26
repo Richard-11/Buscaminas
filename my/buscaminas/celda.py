@@ -2,17 +2,23 @@
 
 class Celda():
     """
+    Representa una celda del clásico juego Buscaminas.
+
     Autor: Richard Albán Fernández
     """
 
     __celdas_marcadas = 0
 
-    def __init__(self, fila, columna):
+    def __init__(self):
+        """
+        Se inicializa el objeto celda con un estado que indica que está cerrado, sin marcar y sin mina. El número
+        de minas por descubrir se inicializa a None y la lista de celdas vecinas está inicialmente vacía.
+        :param fila:
+        :param columna:
+        """
         self.__abierta = False
         self.__marcada = False
         self.__hay_mina = False
-        self.__fila = fila
-        self.__columna = columna
         self.__minas_por_descubrir = None
         self.__celdas_vecinas = []
 
@@ -50,6 +56,16 @@ class Celda():
 
         self.__hay_mina = True
 
+    def quitar_mina(self):
+        """
+        Establece que en la Celda no hay ninguna mina. Se lanza una excepción en caso de que se quiera quitar una mina
+        en una Celda donde no hay ninguna mina.
+        """
+        if not self.__hay_mina:
+            raise ValueError("Esta celda no tiene ninguna mina.")
+
+        self.__hay_mina = False
+
     def marcar(self):
         """
         Establece que una Celda está marcada (True), si cuando se llama al método la celda no está marcada, y establece
@@ -70,12 +86,10 @@ class Celda():
         """
         Establece una Celda como abierta. Si se intenta abrir una celda que ya está abierta, se lanza una excepción.
         """
-
         if self.is_abierta():
             raise ValueError("No se puede abrir una celda que ya está abierta.")
 
         self.__abierta = True
-
 
     def get_minas_por_descubrir(self):
         """
@@ -93,16 +107,20 @@ class Celda():
         """
         self.__minas_por_descubrir = minas_por_descubrir
 
-    def get_fila(self):
-        return self.__fila
-
-    def get_columna(self):
-        return self.__columna
-
     def add_vecina(self, celda):
+        """
+        Añade una celda a la lista de celdas vecinas de una celda.
+
+        :param celda: celda a añadir a la lista de celdas vecinas
+        """
         self.__celdas_vecinas.append(celda)
 
     def get_celdas_vecinas(self):
+        """
+        Devuelve la cantidad de celdas vecinas que tiene una celda.
+
+        :return: cantidad de celda vecinas de una celda
+        """
         return self.__celdas_vecinas
 
     @classmethod
@@ -131,5 +149,4 @@ class Celda():
         """
         Reinicia a 0 la cantidas de celdas marcadas.
         """
-
         cls.__celdas_marcadas = 0

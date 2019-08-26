@@ -81,7 +81,7 @@ Se mostrará el estado del tablero, el número de celdas marcadas, el número de
 el tiempo transcurrido y se pedirá al usuario que introduzca su jugada(s).
 
 
-EVALUACIÓN DE UNA ACCIÓN VÁLIDA
+EVALUACIÓN DE UNA ACCIÓN VÁLIDA:
 
 El pedir marcar una celda cambia su estado de no marcada o marcada o viceversa. Atención porque
 esto cambiará el número mostrado en las celdas vecinas abiertas.
@@ -93,7 +93,7 @@ El pedir abrir una celda puede tener las siguientes consecuencias, aparte de cam
       abren recursivamente todas sus celdas vecinas no abiertas ni marcadas.
 
 
-DETECCIÓN DE FIN DE PARTIDA
+DETECCIÓN DE FIN DE PARTIDA:
 
 Una partida termina cuando:
     - Se abre una celda que contiene una mina, ya sea por indicación directa de la acción del usuario
@@ -107,6 +107,13 @@ Una partida termina cuando:
 
     En ambos caso se muestra el tablero con todas las celdas abiertas, el mensaje descrito, y se pasa al
     menú de inicio de partida.
+
+
+ACTUALIZACIONES:
+
+Versión: 1.1. Se corrige error que no permitía desmarcar celdas cuando se marcaba el número total de celdas.
+Ahora, si la primera apertura se realiza sobre una mina entonces esa mina se mueve a la primera celda que no
+contenga minas.
 
 
 Autor: Richard Albán Fernández
@@ -142,9 +149,18 @@ CSOM = u'\u2593'  # ▒
 
 
 def jugar(filas, columnas, minas, leer_fichero = False):
+    """
+    Realiza todas las operaciones que afectan a la partida.
+
+    :param filas: filas que tendrá el tablero
+    :param columnas: columnas que tendrá el tablero
+    :param minas: minas que tendrá el tablero
+    :param leer_fichero: determina si el tablero se creará aleatoriamente (False) o se leerá de fichero (True)
+    """
     fin_de_partida = False
     partida_ganada = False
     tiempo_inicio = 0
+    primera_apertura = True
 
     if leer_fichero:
         tablero, minas = leer_tablero()
@@ -170,8 +186,11 @@ def jugar(filas, columnas, minas, leer_fichero = False):
                 if not jugada_valida:
                     break
 
-                hacer_jugada(jugada[i], tablero)
+                hacer_jugada(jugada[i], tablero, primera_apertura)
                 calcular_minas_por_descubrir(tablero)
+
+                if ACCIONES[1] in jugada[i]:
+                    primera_apertura = False
 
                 fin_de_partida, partida_ganada = detectar_fin_de_partida(tablero, minas)
 
@@ -184,7 +203,6 @@ def jugar(filas, columnas, minas, leer_fichero = False):
 
             if fin_de_partida:
                 if partida_ganada:
-
                     imprimir_tablero(tablero, minas, tiempo)
                     print "¡HAS GANADO LA PARTIDA! TIEMPO: "
 
@@ -214,7 +232,7 @@ def crear_tablero(filas, columnas, minas):
     for i in range(filas):
         componentes_fila = []
         for j in range(columnas):
-            componentes_fila.append(Celda(i, j))
+            componentes_fila.append(Celda())
 
         tablero.append(componentes_fila)
 
@@ -652,7 +670,6 @@ def imprimir_tablero(tablero, minas, tiempo):
 
     :param tablero: tablero a imprimir
     """
-
     print "MINAS RESTANTES: %2d | MARCADAS: %2d | TIEMPO: %.1f" % (minas, Celda.get_celdas_marcadas(), tiempo)
     print "    ",
 
@@ -756,7 +773,7 @@ def leer_tablero():
         for i in range(int(filas)):
             componentes_filas = []
             for j in range(int(columnas)):
-                celda = Celda(i, j)
+                celda = Celda()
                 if lineas_ficheros[i][j] == "*":
                     celda.poner_mina()
                     componentes_filas.append(celda)
@@ -781,7 +798,6 @@ def dividir_en_subjugadas(jugada):
 
     :return: lista de jugadas
     """
-
     lista_jugadas = []
     cadena_jugada = ""
 
@@ -825,16 +841,17 @@ def validar_jugada(jugada, tablero, minas):
     columna = DIC_COLUMNAS.get(jugada[1])
     accion = jugada[2]
 
-    if accion == "!":
-        if Celda.get_celdas_marcadas() + 1 > minas:
-            print "NO SE PUEDEN MARCAR MAS CELDAS QUE MINAS\n"
-            return False
+    if accion == ACCIONES[0]:
+        if not tablero[fila][columna].is_marcada():
+            if Celda.get_celdas_marcadas() + 1 > minas:
+                print "NO SE PUEDEN MARCAR MAS CELDAS QUE MINAS\n"
+                return False
 
-        if tablero[fila][columna].is_abierta():
-            print "NO SE PUEDE MARCAR UNA CELDA ABIERTA\n"
-            return False
+            if tablero[fila][columna].is_abierta():
+                print "NO SE PUEDE MARCAR UNA CELDA ABIERTA\n"
+                return False
 
-    if accion == "*":
+    if accion == ACCIONES[1]:
         if tablero[fila][columna].is_marcada():
             print "NO SE PUEDE ABRIR UNA CELDA MARCADA\n"
             return False
@@ -846,7 +863,7 @@ def validar_jugada(jugada, tablero, minas):
     return True
 
 
-def hacer_jugada(jugada, tablero):
+def hacer_jugada(jugada, tablero, primera_apertura):
     """
     Se realiza la jugada que se pasa como parámetro en el tablero que también se pasa como parámetro.
 
@@ -864,6 +881,9 @@ def hacer_jugada(jugada, tablero):
         if tablero[fila][columna].is_abierta() and tablero[fila][columna].get_minas_por_descubrir() <= 0:
             abrir_recursivamente(tablero[fila][columna])
         else:
+            if tablero[fila][columna].hay_mina() and primera_apertura:
+                mover_mina_a_primera_posicion_sin_minas(tablero[fila][columna], tablero)
+
             tablero[fila][columna].abrir()
 
 
@@ -874,7 +894,6 @@ def abrir_recursivamente(celda):
 
     :param celda: celda de la que se quieren abrir las celdas vecinas
     """
-
     if not celda.get_celdas_vecinas():
         return
     else:
@@ -896,7 +915,6 @@ def detectar_fin_de_partida(tablero, minas):
     :return: una tupla en la que el primer elemento determina si se ha detectado el final de la partida (True si se
     detecta y False en caso contrario), y el segundo indica si se ha ganado (True) o si se ha perdido (False)
     """
-
     todas_abiertas_o_marcadas = True
     fin_de_partida = False
     partida_ganada = False
@@ -923,11 +941,25 @@ def abrir_celdas(tablero):
 
     :param tablero: tablero del que se abren las celdas
     """
-
     for i in range(len(tablero)):
         for j in range(len(tablero[0])):
             if not tablero[i][j].is_abierta():
                 tablero[i][j].abrir()
+
+
+def mover_mina_a_primera_posicion_sin_minas(celda, tablero):
+    """
+    Mueve la mina que se pasa como parámetro a la primera celda que no contenga minas.
+
+    :param celda: celda a mover
+    :param tablero: tablero en el que se va a mover la celda
+    """
+    for i in range(len(tablero)):
+        for j in range(len(tablero[0])):
+            if not tablero[i][j].hay_mina():
+                celda.quitar_mina()
+                tablero[i][j].poner_mina()
+                return
 
 
 # main
