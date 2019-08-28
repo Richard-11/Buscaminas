@@ -148,6 +148,44 @@ CONE = u'\u2534'  # ┴
 CSOM = u'\u2593'  # ▒
 
 
+def main():
+    """
+    Función principal.
+    """
+    while True:
+        print "BUSCAMINAS"
+        print "----------"
+        print " 1. Principiante (9x9, 10 minas)"
+        print " 2. Intermedio (16x16, 40 minas)"
+        print " 3. Experto (16x30, 99 minas)"
+        print " 4. Leer de fichero"
+        print " 5. Salir"
+
+        while True:
+            try:
+                modo = int(raw_input("\nEscoja opción: "))
+                print
+                break
+            except ValueError:
+                print "Por favor, introduzca una opción válida."
+
+        if modo == 1:
+            jugar(9, 9, 10)
+        elif modo == 2:
+            jugar(16, 16, 40)
+        elif modo == 3:
+            jugar(16, 30, 99)
+        elif modo == 4:
+            jugar(None, None, None, True)
+        elif modo == 5:
+            print "¡Hasta la próxima!"
+            break
+        else:
+            print "Por favor, seleccione una opción válida.\n"
+
+        print '\n'
+
+
 def jugar(filas, columnas, minas, leer_fichero = False):
     """
     Realiza todas las operaciones que afectan a la partida.
@@ -962,36 +1000,5 @@ def mover_mina_a_primera_posicion_sin_minas(celda, tablero):
                 return
 
 
-# main
-while True:
-    print "BUSCAMINAS"
-    print "----------"
-    print " 1. Principiante (9x9, 10 minas)"
-    print " 2. Intermedio (16x16, 40 minas)"
-    print " 3. Experto (16x30, 99 minas)"
-    print " 4. Leer de fichero"
-    print " 5. Salir"
-
-    while True:
-        try:
-            modo = int(raw_input("\nEscoja opción: "))
-            print
-            break
-        except ValueError:
-            print "Por favor, introduzca una opción válida."
-
-    if modo == 1:
-        jugar(9, 9, 10)
-    elif modo == 2:
-        jugar(16, 16, 40)
-    elif modo == 3:
-        jugar(16, 30, 99)
-    elif modo == 4:
-        jugar(None, None, None, True)
-    elif modo == 5:
-        print "¡Hasta la próxima!"
-        break
-    else:
-        print "Por favor, seleccione una opción válida.\n"
-
-    print '\n'
+if __name__ == '__main__':
+    main()
